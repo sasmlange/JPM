@@ -9,4 +9,10 @@ is not an official program of `J*`_. JPM was only made to add libraries to
 
 
 
+
+Documentation: https://sasmlange.github.io/jpm
+
+
+
+
 .. _J*: https://github.com/bamless/jstar
