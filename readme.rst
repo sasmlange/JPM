@@ -1,4 +1,4 @@
-Introduction
+JPM
 ======================
 
 JPM (`J*`_ Package Manager) is a package manager of `J*`_. The documentation for
