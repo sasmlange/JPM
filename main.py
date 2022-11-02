@@ -1,7 +1,4 @@
-debug = True
-
 import argparse
-import json
 import tomli
 import os
 import shutil
@@ -12,8 +9,11 @@ from io import BytesIO
 from zipfile import ZipFile
 from urllib.request import urlopen
 
+debug = True
+
+
 parser = argparse.ArgumentParser()
-parser.add_argument('type', help="Can be install or uninstall")
+parser.add_argument('type', help="Can be install, uninstall, or docs")
 parser.add_argument('name', help="The URL of your package")
 args = parser.parse_args()
 Name = args.name
@@ -35,8 +35,9 @@ if args.type == "install":
         raise SystemExit(0)
 
     Config = tomli.loads(Config)
-    Install = input(f"This will install {Config['name']} {str(Config['version'])} in {os.getcwd()}\\jpm\\{slugify(Config['name'])} \n"
-                    f"Is that ok (y,n): ")
+    Install = input(
+        f"This will install {Config['name']} {str(Config['version'])} in {os.getcwd()}\\jpm\\{slugify(Config['name'])} \n"
+        f"Is that ok (y,n): ")
 
     if Install.lower() == "n":
         print("Install Canceled")
@@ -70,6 +71,17 @@ elif args.type == "uninstall":
     print("\n \nUninstall Complete")
 
 
+elif args.type == "docs":
+    try:
+        with open(f"{os.getcwd()}\\jpm\\{slugify(Name)}\\config.toml") as file:
+            print("\n\n")
+            print(tomli.loads(file.read())["docs"])
+    except FileNotFoundError as e:
+        print("Error: The package is missing a config.json or does not exist \n \nThe documentation of this package "
+              "cannot be found. Contact the Developer of this package for a fix")
+
+        if debug:
+            print(e)
 else:
     print(f"Error: Type '{args.type}' is not a type.")
     raise SystemExit(0)
