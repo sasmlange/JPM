@@ -1,5 +1,8 @@
+debug = True
+
 import argparse
 import json
+import tomli
 import os
 import shutil
 
@@ -22,15 +25,17 @@ if args.type == "install":
 
     Config = ""
     try:
-        for line in zipfile.open("config.json").readlines():
+        for line in zipfile.open("config.toml").readlines():
             Config = Config + line.decode('unicode_escape')
-    except KeyError:
+    except KeyError as e:
         print("Error: The package is missing a config.json \n \nThe package cannot be installed. Contact the Developer "
               "of this package for a fix")
+        if debug:
+            print(e)
         raise SystemExit(0)
 
-    Config = json.loads(Config)
-    Install = input(f"This will install {Config['Name']} {str(Config['Version'])} in {os.getcwd()}\\jpm\\{slugify(Config['Name'])} \n"
+    Config = tomli.loads(Config)
+    Install = input(f"This will install {Config['name']} {str(Config['version'])} in {os.getcwd()}\\jpm\\{slugify(Config['name'])} \n"
                     f"Is that ok (y,n): ")
 
     if Install.lower() == "n":
@@ -40,7 +45,7 @@ if args.type == "install":
     print(f"Downloading {Name}...")
     Content = requests.get(Name)
     with ZipFile(BytesIO(Content.content)) as zfile:
-        zfile.extractall(f"{os.getcwd()}/jpm/{slugify(Config['Name'])}")
+        zfile.extractall(f"{os.getcwd()}/jpm/{slugify(Config['name'])}")
 
     print(f"Downloaded {Name}")
     print(f"\n \nInstall Completed")
