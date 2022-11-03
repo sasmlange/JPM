@@ -28,7 +28,7 @@ if args.type == "install":
         for line in zipfile.open("config.toml").readlines():
             Config = Config + line.decode('unicode_escape')
     except KeyError as e:
-        print("Error: The package is missing a config.json \n \nThe package cannot be installed. Contact the Developer "
+        print("Error: The package is missing a config.toml \n \nThe package cannot be installed. Contact the Developer "
               "of this package for a fix")
         if debug:
             print(e)
@@ -84,7 +84,7 @@ elif args.type == "docs":
             print("\n\n")
             print(tomli.loads(file.read())["docs"])
     except FileNotFoundError as e:
-        print("Error: The package is missing a config.json or does not exist \n \nThe documentation of this package "
+        print("Error: The package is missing a config.toml or does not exist \n \nThe documentation of this package "
               "cannot be found. Contact the Developer of this package for a fix")
 
         if debug:
