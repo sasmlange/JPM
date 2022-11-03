@@ -13,7 +13,7 @@ debug = True
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('type', help="Can be install, uninstall, or docs")
+parser.add_argument('type', help="Can be install, uninstall, update or docs")
 parser.add_argument('name', help="The URL of your package")
 args = parser.parse_args()
 Name = args.name
@@ -76,6 +76,53 @@ elif args.type == "uninstall":
 
     print(f"Uninstalled {Name}")
     print("\n \nUninstall Complete")
+
+elif args.type == "update":
+    print(f"Fetching {Name}...")
+    try:
+        with open(f"{os.getcwd()}\\jpm\\{slugify(Name)}\\config.toml") as file:
+            content = file.read()
+            old_version = tomli.loads(content)["version"]
+            download_url = tomli.loads(content)["download"]
+            resp = urlopen(download_url)
+
+    except FileNotFoundError as e:
+        print("Package Not Found")
+        if debug:
+            print(e)
+        raise SystemExit(0)
+
+    zipfile = ZipFile(BytesIO(resp.read()))
+    Config = ""
+
+    try:
+        for line in zipfile.open("config.toml").readlines():
+            Config = Config + line.decode('unicode_escape')
+    except KeyError as e:
+        print("Error: The package is missing a config.toml \n \nThe package cannot be installed. Contact the Developer "
+              "of this package for a fix")
+        if debug:
+            print(e)
+        raise SystemExit(0)
+
+    Config = tomli.loads(Config)
+
+    if Config["version"].replace() == old_version:
+        print(f"No new releases found. Version {old_version} is the latest version of {Name}.")
+        raise SystemExit(0)
+
+    print(f"Upgrading {Name} {old_version} to {Name} {Config['version']}...")
+
+    print(f"Removing {Name} {old_version}...")
+    shutil.rmtree(f"{os.getcwd()}\\jpm\\{slugify(Name)}")
+    print(f"{Name} {old_version} removed")
+    print(f"Installing {Name} {Config['version']}...")
+    Content = requests.get(download_url)
+    with ZipFile(BytesIO(Content.content)) as zfile:
+        zfile.extractall(f"{os.getcwd()}/jpm/{slugify(Config['name'])}")
+
+    print(f"Downloaded {Config['name']}")
+    print(f"\n \nUpdate Completed")
 
 
 elif args.type == "docs":
