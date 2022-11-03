@@ -9,7 +9,7 @@ from io import BytesIO
 from zipfile import ZipFile
 from urllib.request import urlopen
 
-debug = True
+debug = False
 
 
 parser = argparse.ArgumentParser()
