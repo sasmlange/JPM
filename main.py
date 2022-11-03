@@ -35,6 +35,13 @@ if args.type == "install":
         raise SystemExit(0)
 
     Config = tomli.loads(Config)
+
+    if os.path.isdir(f"{os.getcwd()}/jpm/{slugify(Config['name'])}"):
+        print("Package exists, aborting install... \n")
+        print(f"ERROR: Package name exists, please uninstall {Config['name']} before proceeding. To update a package "
+              f"run: \njpm update {Config['name']}")
+        raise SystemExit(0)
+
     Install = input(
         f"This will install {Config['name']} {str(Config['version'])} in {os.getcwd()}\\jpm\\{slugify(Config['name'])} \n"
         f"Is that ok (y,n): ")
