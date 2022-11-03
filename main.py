@@ -43,12 +43,12 @@ if args.type == "install":
         print("Install Canceled")
         raise SystemExit(0)
 
-    print(f"Downloading {Name}...")
+    print(f"Downloading {Config['name']}...")
     Content = requests.get(Name)
     with ZipFile(BytesIO(Content.content)) as zfile:
         zfile.extractall(f"{os.getcwd()}/jpm/{slugify(Config['name'])}")
 
-    print(f"Downloaded {Name}")
+    print(f"Downloaded {Config['name']}")
     print(f"\n \nInstall Completed")
 
 elif args.type == "uninstall":
