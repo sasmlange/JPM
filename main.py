@@ -18,15 +18,35 @@ parser.add_argument('name', help="The URL of your package")
 args = parser.parse_args()
 Name = args.name
 
-if args.type == "install":
-    print(f"Fetching {Name}...")
-    resp = urlopen(Name)
+
+def version_number_to_int(version_num: str):
+    return int(version_num.replace(".", ""))
+
+
+def download(config: dict, url="default"):
+    if url == "default":
+        url = Name
+
+    print(f"Downloading {config['name']}...")
+    content = requests.get(url)
+    with ZipFile(BytesIO(content.content)) as zfile:
+        zfile.extractall(f"{os.getcwd()}/jpm/{slugify(config['name'])}")
+
+    print(f"Downloaded {config['name']}")
+
+
+def fetch_package(url="default", override=True):
+    if url == "default":
+        url = Name
+
+    print(f"Fetching {url}...")
+    resp = urlopen(url)
     zipfile = ZipFile(BytesIO(resp.read()))
 
-    Config = ""
+    config = ""
     try:
         for line in zipfile.open("config.toml").readlines():
-            Config = Config + line.decode('unicode_escape')
+            config = config + line.decode('unicode_escape')
     except KeyError as e:
         print("Error: The package is missing a config.toml \n \nThe package cannot be installed. Contact the Developer "
               "of this package for a fix")
@@ -34,13 +54,19 @@ if args.type == "install":
             print(e)
         raise SystemExit(0)
 
-    Config = tomli.loads(Config)
+    config = tomli.loads(config)
 
-    if os.path.isdir(f"{os.getcwd()}/jpm/{slugify(Config['name'])}"):
+    if os.path.isdir(f"{os.getcwd()}/jpm/{slugify(config['name'])}") and not override:
         print("Package exists, aborting install... \n")
-        print(f"ERROR: Package name exists, please uninstall {Config['name']} before proceeding. To update a package "
-              f"run: \njpm update {Config['name']}")
+        print(f"ERROR: Package name exists, please uninstall {config['name']} before proceeding. To update a package "
+              f"run: \njpm update {config['name']}")
         raise SystemExit(0)
+
+    return config
+
+
+if args.type == "install":
+    Config = fetch_package()
 
     Install = input(
         f"This will install {Config['name']} {str(Config['version'])} in {os.getcwd()}\\jpm\\{slugify(Config['name'])} \n"
@@ -50,12 +76,8 @@ if args.type == "install":
         print("Install Canceled")
         raise SystemExit(0)
 
-    print(f"Downloading {Config['name']}...")
-    Content = requests.get(Name)
-    with ZipFile(BytesIO(Content.content)) as zfile:
-        zfile.extractall(f"{os.getcwd()}/jpm/{slugify(Config['name'])}")
+    download(Config)
 
-    print(f"Downloaded {Config['name']}")
     print(f"\n \nInstall Completed")
 
 elif args.type == "uninstall":
@@ -78,13 +100,11 @@ elif args.type == "uninstall":
     print("\n \nUninstall Complete")
 
 elif args.type == "update":
-    print(f"Fetching {Name}...")
     try:
         with open(f"{os.getcwd()}\\jpm\\{slugify(Name)}\\config.toml") as file:
             content = file.read()
             old_version = tomli.loads(content)["version"]
             download_url = tomli.loads(content)["download"]
-            resp = urlopen(download_url)
 
     except FileNotFoundError as e:
         print("Package Not Found")
@@ -92,22 +112,9 @@ elif args.type == "update":
             print(e)
         raise SystemExit(0)
 
-    zipfile = ZipFile(BytesIO(resp.read()))
-    Config = ""
+    Config = fetch_package(download_url, True)
 
-    try:
-        for line in zipfile.open("config.toml").readlines():
-            Config = Config + line.decode('unicode_escape')
-    except KeyError as e:
-        print("Error: The package is missing a config.toml \n \nThe package cannot be installed. Contact the Developer "
-              "of this package for a fix")
-        if debug:
-            print(e)
-        raise SystemExit(0)
-
-    Config = tomli.loads(Config)
-
-    if Config["version"].replace() == old_version:
+    if version_number_to_int(Config["version"]) <= version_number_to_int(old_version):
         print(f"No new releases found. Version {old_version} is the latest version of {Name}.")
         raise SystemExit(0)
 
@@ -116,12 +123,8 @@ elif args.type == "update":
     print(f"Removing {Name} {old_version}...")
     shutil.rmtree(f"{os.getcwd()}\\jpm\\{slugify(Name)}")
     print(f"{Name} {old_version} removed")
-    print(f"Installing {Name} {Config['version']}...")
-    Content = requests.get(download_url)
-    with ZipFile(BytesIO(Content.content)) as zfile:
-        zfile.extractall(f"{os.getcwd()}/jpm/{slugify(Config['name'])}")
 
-    print(f"Downloaded {Config['name']}")
+    download(Config, download_url)
     print(f"\n \nUpdate Completed")
 
 
