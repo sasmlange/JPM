@@ -1,7 +1,11 @@
 
-name = "Test Package"
+name = "jpm_test_package"
 version = "1.2.9"
-download = "https://sasmlange.github.io/jstar_package.zip"
+download = "https://sasmlange.github.io/jstartest.zip"
+dependencies = [
+    "https://sasmlange.github.io/jstar_package.zip",
+]
+
 docs = """
 Test Package
 ===============

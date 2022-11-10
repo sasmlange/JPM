@@ -19,6 +19,15 @@ args = parser.parse_args()
 Name = args.name
 
 
+def download_packages(packages):
+    for package in packages:
+        config = fetch_package(package, True)
+        if not config:
+            print(f"An error has occurred while trying to fetch {package}")
+        else:
+            download(config, package)
+
+
 def version_number_to_int(version_num: str):
     return int(version_num.replace(".", ""))
 
@@ -32,10 +41,17 @@ def download(config: dict, url="default"):
     with ZipFile(BytesIO(content.content)) as zfile:
         zfile.extractall(f"{os.getcwd()}/jpm/{slugify(config['name'])}")
 
-    print(f"Downloaded {config['name']}")
+    print(f"Downloading dependencies...")
+
+    try:
+        download_packages(config['dependencies'])
+    except:
+        print("No dependencies found")
+
+    print(f"\nDownloaded {config['name']}")
 
 
-def fetch_package(url="default", override=True):
+def fetch_package(url="default", override=True, force=False):
     if url == "default":
         url = Name
 
@@ -48,19 +64,25 @@ def fetch_package(url="default", override=True):
         for line in zipfile.open("config.toml").readlines():
             config = config + line.decode('unicode_escape')
     except KeyError as e:
-        print("Error: The package is missing a config.toml \n \nThe package cannot be installed. Contact the Developer "
-              "of this package for a fix")
+        print(f"Error: The package is missing a config.toml \n \nThe package {url} cannot be installed. Contact the "
+              "Developer of this package for a fix")
         if debug:
             print(e)
-        raise SystemExit(0)
+        if force:
+            return False
+        else:
+            raise SystemExit(0)
 
     config = tomli.loads(config)
 
     if os.path.isdir(f"{os.getcwd()}/jpm/{slugify(config['name'])}") and not override:
         print("Package exists, aborting install... \n")
-        print(f"ERROR: Package name exists, please uninstall {config['name']} before proceeding. To update a package "
-              f"run: \njpm update {config['name']}")
-        raise SystemExit(0)
+        print(f"Package {config['name']} exists. To update a package "
+              f"run: \njpm update {slugify(config['name'])}")
+        if force:
+            return False
+        else:
+            raise SystemExit(0)
 
     return config
 
